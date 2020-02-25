@@ -1,14 +1,14 @@
-from model.graph_utilities import  read_graph
-from model.losses import infinite_margin_loss, max_margin_loss
+from ..model.graph_utilities import  read_graph
+from ..model.losses import infinite_margin_loss, max_margin_loss
 from keras.regularizers import l2
-from model.srs_model import NetworkRS
+from ..model.srs_model import NetworkRS
 import numpy as np
 import math
-from model.RSbatch import ItemGenerator,TripletGenerator
+from ..model.RSbatch import ItemGenerator,TripletGenerator
 from sklearn.utils import shuffle
-from model.socialRC import test_recommendation
-from model.mlmr import mlmf
-from model.scorer import nn_scoremodel, inner_prod_scoremodel, fm_scoremodel
+from ..model.socialRC import test_recommendation
+from ..model.mlmr import mlmf
+from ..model.scorer import nn_scoremodel, inner_prod_scoremodel, fm_scoremodel
 
 
 data_name='lastfm'
@@ -81,7 +81,7 @@ def get_item_rep(model, G_item, embed_len, item_rep_path, batch_size=100, save=F
 
     for j in range(nb_batch):
         batch_node = node_list[j * batch_size:min(node_size, (j + 1) * batch_size)]
-        first_batch_data, _ =  batchGenerator.itemGenerate.get_batch_data_topk(batch_node=batch_node, topK=topK, predict_batch_size=100, order=1)
+        first_batch_data, _ =  batchGenerator.itemGenerate.get_batch_data_topk(batch_node=batch_node, topK=topK, predict_batch_size=100)
 
         memory_out = model.item_model.predict_on_batch([np.array(batch_node), first_batch_data])
         memory_output[batch_node, :] = memory_out

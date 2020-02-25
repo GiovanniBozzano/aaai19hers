@@ -57,13 +57,13 @@ class BaseGenerator(object):
                 second_batch_data[i,j,:len(child_nodes)] = child_nodes
         return first_batch_data, second_batch_data
 
-    def get_batch_data_topk(self, batch_node, topK=50, excluded_node_batch=None, predict_batch_size=100):
+    def get_batch_data_topk(self, batch_node, embeddings, topK=50, excluded_node_batch=None, predict_batch_size=100):
         if not isinstance(batch_node, list): batch_node = [batch_node]
         batch_size = len(batch_node)
-        embedding_layer = self.model.second_model.get_layer('node_embedding')
+        # embedding_layer = self.model.second_model.get_layer('node_embedding')
 
-        embeddings = embedding_layer.get_weights()[0]
-        attention_layer = self.model.subgraph_model.get_layer("attention_first")
+        # embeddings = embedding_layer.get_weights()[0]
+        attention_layer = self.model.user_model.get_layer("attention_first")
         attention_mid_wt = attention_layer.get_weights()[0]
         attention_out_wt = attention_layer.get_weights()[1]
         attention_mid_b = attention_layer.get_weights()[2]
@@ -97,7 +97,8 @@ class BaseGenerator(object):
                         second_neighbors_embedding = embeddings[child_nodes]
                         first_repeat = np.repeat(np.expand_dims(embeddings[first_node], 0), len(child_nodes), axis=0)
                         attention_vectors = np.concatenate([second_neighbors_embedding, first_repeat], axis=-1)
-                        hid_units = np.tanh(np.dot(attention_vectors, attention_mid_wt_second) + attention_mid_b_second)
+                        # hid_units = np.tanh(np.dot(attention_vectors, attention_mid_wt_second) + attention_mid_b_second)
+                        hid_units = np.tanh(np.dot(second_neighbors_embedding, attention_mid_wt_second) + attention_mid_b_second)
                         attention_values = np.dot(hid_units, attention_out_wt_second) + attention_out_b_second
 
                         top_k_nodes_index = np.argpartition(-attention_values, topK)[:topK]
@@ -107,13 +108,14 @@ class BaseGenerator(object):
                     prune_list[first_node] = top_k_nodes
 
                 if nb_first_node > topK:
-                    target_input = np.array([target]).repeat(nb_first_node)
-                    first_input = np.array(first_neighbors)
-                    first_memory = self.model.second_model.predict_aspect_scores([target_input, first_input, second_inputs],
+                    target_input = np.array([target], dtype=np.int32).repeat(nb_first_node)
+                    first_input = np.array(first_neighbors, dtype=np.int32)
+                    first_memory = self.model.second_model.predict([target_input, first_input, second_inputs],
                                                                                  batch_size=predict_batch_size)
                     target_embedding = np.repeat(target_embedding, nb_first_node, axis=0)
                     attention_vectors = np.concatenate([first_memory, target_embedding], axis=-1)
-                    hid_units = np.tanh(np.dot(attention_vectors, attention_mid_wt) + attention_mid_b)
+                    # hid_units = np.tanh(np.dot(attention_vectors, attention_mid_wt) + attention_mid_b)
+                    hid_units = np.tanh(np.dot(first_memory, attention_mid_wt) + attention_mid_b)
                     scores = np.dot(hid_units, attention_out_wt) + attention_out_b
 
                     first_neighbors = [first_neighbors[m] for m in np.argpartition(-scores, topK)[:topK]]

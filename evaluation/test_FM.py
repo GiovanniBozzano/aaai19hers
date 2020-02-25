@@ -5,7 +5,7 @@ import csv
 import random
 from fastFM import bpr
 from fastFM import utils
-from model.ranking import precisionAtK,recallAtK,nDCG,mrrAtK,avgPrecisionAtK
+from ..model.ranking import precisionAtK,recallAtK,nDCG,mrrAtK,avgPrecisionAtK
 from scipy.sparse import lil_matrix, hstack, spdiags
 
 data_name='book'

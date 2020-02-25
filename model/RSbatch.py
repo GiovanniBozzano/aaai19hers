@@ -1,6 +1,6 @@
 import numpy as np
 import random
-from model.batch_generator_np import BaseGenerator
+from .batch_generator_np import BaseGenerator
 
 class ItemGenerator(BaseGenerator):
     def __init__(self, G, model):
@@ -19,6 +19,9 @@ class ItemGenerator(BaseGenerator):
         attention_out_wt = attention_layer.get_weights()[2]
         attention_out_b = attention_layer.get_weights()[3]
         return attention_mid_wt, attention_mid_b, attention_out_wt, attention_out_b
+
+    def get_batch_data_topk(self, batch_node, embeddings=None, topK=50, excluded_node_batch=None, predict_batch_size=100):
+        return super().get_batch_data_topk(batch_node, self.get_node_embed(), topK, excluded_node_batch, predict_batch_size)
 
 
 import numpy as np
@@ -75,16 +78,20 @@ class TripletGenerator(BaseGenerator):
         return target_batch, positive_batch, negative_batch
 
 
+    def get_batch_data_topk(self, batch_node, embeddings=None, topK=50, excluded_node_batch=None, predict_batch_size=100):
+        return super().get_batch_data_topk(batch_node, self.get_node_embed(), topK, excluded_node_batch, predict_batch_size)
+
+
     def generate_triplet_batch(self, edge_batch, topK=50, attention_sampling = False):
         batch_node, positive_batch, negative_batch = self.get_target_batch(edge_batch)
         if (attention_sampling):
             first_batch_data, second_batch_data = self.get_batch_data_topk(batch_node, excluded_node_batch=positive_batch, topK=topK)
-            positive_first_batch, _  = self.itemGenerate.get_batch_data_topk(positive_batch, excluded_node_batch=batch_node, topK=topK,order=1)
-            negative_first_batch, _  = self.itemGenerate.get_batch_data_topk(negative_batch, excluded_node_batch=batch_node, topK=topK,order=1)
+            positive_first_batch, _  = self.itemGenerate.get_batch_data_topk(positive_batch, excluded_node_batch=batch_node, topK=topK)
+            negative_first_batch, _  = self.itemGenerate.get_batch_data_topk(negative_batch, excluded_node_batch=batch_node, topK=topK)
         else:
             first_batch_data, second_batch_data = self.get_batch_data_sample_k(batch_node, excluded_node_batch=positive_batch, topK=topK)
-            positive_first_batch, _ = self.itemGenerate.get_batch_data_sample_k(positive_batch, excluded_node_batch=batch_node,  topK=topK,order=1)
-            negative_first_batch, _ = self.itemGenerate.get_batch_data_sample_k(negative_batch, excluded_node_batch=batch_node, topK=topK,order=1)
+            positive_first_batch, _ = self.itemGenerate.get_batch_data_sample_k(positive_batch, excluded_node_batch=batch_node,  topK=topK)
+            negative_first_batch, _ = self.itemGenerate.get_batch_data_sample_k(negative_batch, excluded_node_batch=batch_node, topK=topK)
 
         return batch_node, positive_batch, negative_batch,\
                first_batch_data, second_batch_data,\

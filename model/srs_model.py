@@ -1,9 +1,9 @@
 from keras.layers import Input, Activation, concatenate, RepeatVector, dot, GRU, multiply, Lambda, Embedding, Dense, Dropout
 from keras.models import Model, Sequential
-from model.timedistributed import TimeDistributedMultiInput
-from model.attentionlayer import PairAttention, AggGatedAttention, TwoLayerAttention, GatedAttention, AverageAttention
+from .timedistributed import TimeDistributedMultiInput
+from .attentionlayer import PairAttention, AggGatedAttention, TwoLayerAttention, GatedAttention, AverageAttention
 from keras import backend as K
-from model.masklayers import DropMask, MultiMask
+from .masklayers import DropMask, MultiMask
 
 
 class NetworkRS(object):
@@ -16,6 +16,7 @@ class NetworkRS(object):
         self.user_mask = user_mask
         self.item_mask = item_mask
         self.embed_len = embed_len
+        self.embed_regularizer = embed_regularizer
         self.user_embed = Embedding(self.user_size + 1, self.embed_len, name='node_embedding',
                                     embeddings_regularizer=embed_regularizer, mask_zero=True)
         self.item_embed = Embedding(self.item_size + 1, self.embed_len, name='node_embedding',
@@ -57,8 +58,10 @@ class NetworkRS(object):
 
         first_node_input = Input(shape=(1,), dtype='int32', name='first_input_target')
         second_node_input = Input(shape=(self.second_dims,), dtype='int32', name='second_input_target')
-        first_embedded_node = self.user_embed(first_node_input)
-        second_embedded_nodes = self.user_embed(second_node_input)
+        first_embedded_node = Embedding(self.user_size + 1, self.embed_len, name='first_embeddeding',
+                                        embeddings_regularizer=self.embed_regularizer, mask_zero=True)(first_node_input)
+        second_embedded_nodes = Embedding(self.user_size + 1, self.embed_len, name='second_embeddeding',
+                                          embeddings_regularizer=self.embed_regularizer, mask_zero=True)(second_node_input)
         attention_second = TwoLayerAttention(name='attention_second', mid_units=64,
                                              alpha=self.mem_filt_alpha, keepdims=True)(second_embedded_nodes)
         # attention_second = BatchAttention(name='attention_second', keepdims=True)([second_embedded_nodes, first_embedded_node])

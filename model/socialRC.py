@@ -1,5 +1,5 @@
 import numpy as np
-from model.ranking import precisionAtK,recallAtK,nDCG,mrrAtK,avgPrecisionAtK
+from .ranking import precisionAtK,recallAtK,nDCG,mrrAtK,avgPrecisionAtK
 import csv
 
 def cn_scores(G,from_node,to_node):
