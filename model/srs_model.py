@@ -21,6 +21,10 @@ class NetworkRS(object):
                                     embeddings_regularizer=embed_regularizer, mask_zero=True)
         self.item_embed = Embedding(self.item_size + 1, self.embed_len, name='node_embedding',
                                     embeddings_regularizer=embed_regularizer, mask_zero=True)
+        self.user_attention_first_embed = Embedding(self.user_size + 1, self.embed_len, name='first_embeddeding',
+                                                    embeddings_regularizer=self.embed_regularizer, mask_zero=True)
+        self.user_attention_second_embed = Embedding(self.user_size + 1, self.embed_len, name='second_embeddeding',
+                                                     embeddings_regularizer=self.embed_regularizer, mask_zero=True)
 
         self.second_dims=second_dims
         self.first_dims = first_dims
@@ -58,10 +62,8 @@ class NetworkRS(object):
 
         first_node_input = Input(shape=(1,), dtype='int32', name='first_input_target')
         second_node_input = Input(shape=(self.second_dims,), dtype='int32', name='second_input_target')
-        first_embedded_node = Embedding(self.user_size + 1, self.embed_len, name='first_embeddeding',
-                                        embeddings_regularizer=self.embed_regularizer, mask_zero=True)(first_node_input)
-        second_embedded_nodes = Embedding(self.user_size + 1, self.embed_len, name='second_embeddeding',
-                                          embeddings_regularizer=self.embed_regularizer, mask_zero=True)(second_node_input)
+        first_embedded_node = self.user_attention_first_embed(first_node_input)
+        second_embedded_nodes = self.user_attention_second_embed(second_node_input)
         attention_second = TwoLayerAttention(name='attention_second', mid_units=64,
                                              alpha=self.mem_filt_alpha, keepdims=True)(second_embedded_nodes)
         # attention_second = BatchAttention(name='attention_second', keepdims=True)([second_embedded_nodes, first_embedded_node])
