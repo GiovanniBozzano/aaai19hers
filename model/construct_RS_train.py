@@ -1,10 +1,16 @@
 import numpy as np
 import math
+
 from sklearn.utils import shuffle
+from .data_utilities import split_negative_test
 from .graph_utilities import read_graph
 import random
 import csv
 import networkx as nx
+
+
+data_path = "datasets/book/"
+
 
 def network_statistic(data_path):
 
@@ -16,7 +22,7 @@ def network_statistic(data_path):
 
 def construct_train(data_name):
     test_ratio=0.2
-    ui_data_path="networkRS/%s_rating.txt"%(data_name)
+    ui_data_path = "../datasets/%s/%s_rating.txt" % (data_name, data_name)
     ui_data=np.loadtxt(ui_data_path,dtype=np.int32)
 
     ui_data=shuffle(ui_data)
@@ -33,7 +39,7 @@ def construct_train(data_name):
     test_data = np.loadtxt(test_path, dtype=np.int32)
     data = np.loadtxt(ui_data_path, dtype=np.int32)
     neg_pro=10
-    neg_all=split_negative_test(list(set(data[:,1])),test_data,data,neg_pro)
+    neg_all=split_negative_test(test_data,data,neg_pro)
     with open(neg_path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(neg_all)
@@ -70,7 +76,7 @@ def construct_cold_user():
     train_data_len=len(train_data)
     train_data= shuffle(train_data)
     #train_data=train_data[:math.ceil(train_data_len*0.5)]
-    neg_all=split_negative_test(list(set(rating[:,1])),test_data,rating,neg_pro)
+    neg_all=split_negative_test(test_data,rating,neg_pro)
     with open(neg_path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(neg_all)
@@ -112,7 +118,7 @@ def construct_cold_item(name):
     # train_data=np.asarray([rating[i,:] for i,u in enumerate(rating[:,1]) if u not in test_items])
     # test_data =np.asarray([rating[i,:] for i,u in enumerate(rating[:, 1]) if u in test_items])
 
-    neg_all=split_negative_test(item_list,test_data,rating,neg_pro)
+    neg_all=split_negative_test(test_data,rating,neg_pro)
     with open(neg_path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(neg_all)
@@ -124,18 +130,6 @@ def construct_cold_item(name):
     print("construct cold item data successfully")
 
     return True
-
-def split_negative_test(item_list, test_data, rating, neg_pro):
-    neg_tests = []
-    test_list = list(set(test_data[:, 0]))
-    for test_user in test_list:
-        user_pos_interactions = rating[rating[:, 0] == test_user, 1]
-        user_pos_interactions_test = test_data[test_data[:, 0] == test_user, 1]
-        item_list_temp = [i for i in item_list if i not in user_pos_interactions]
-        user_neg_tests = np.random.choice(item_list_temp, size=neg_pro * len(user_pos_interactions_test))
-        user_neg_tests = np.insert(user_neg_tests, 0, test_user)
-        neg_tests.append(user_neg_tests)
-    return neg_tests
 
 def get_attention_graph_RS(model, G_u, G_i, edge, topK, att_graph_path, order=2):
     first_batch_data = np.zeros([1, topK], dtype=np.int32)
@@ -249,12 +243,12 @@ def get_attention_graph_RS(model, G_u, G_i, edge, topK, att_graph_path, order=2)
 #
 # data_name='lastfm'
 # construct_cold_item(data_name)
-# data_name='book'
-# construct_cold_item(data_name)
+data_name='book'
+#construct_cold_item(data_name)
 # user_net_path='networkRS/%s_userNet.txt'%data_name
 # data_path = 'networkRS/%s_rating.txt' % data_name
 #item_path = 'networkRS/%s_itemNet.txt'%data_name
 #network_statistic(item_path )
 #
-# construct_train(data_name)
-construct_cold_user()
+construct_train(data_name)
+#construct_cold_user()
